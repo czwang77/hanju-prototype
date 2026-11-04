@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>非遗武汉</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html, body { height: 100%; overflow: hidden; background: #14100D; }
+  body {
+    font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .frame {
+    position: relative;
+    width: 393px; height: 852px;
+    transform-origin: center center;
+    border-radius: 28px;
+    overflow: hidden;
+    box-shadow: 0 18px 60px rgba(0,0,0,.55), 0 0 0 1px rgba(255,235,200,.06);
+  }
+  .screen { position: relative; width: 393px; height: 852px; background: #F4EDE0; }
+  .screen img { display: block; width: 393px; height: 852px; -webkit-user-drag: none; user-select: none; }
+  .spot {
+    position: absolute; cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .spot:active { background: rgba(120,70,50,.14); border-radius: 10px; }
+  img.fadein { animation: fadein .18s ease; }
+  @keyframes fadein { from { opacity: 0; } to { opacity: 1; } }
+</style>
+</head>
+<body>
+<div class="frame"><div class="screen" id="screen"></div></div>
+<script>
+var W = 393, H = 852;
+
+/* 底部标签栏：首页 / 剧目 / 日历 / 我的 */
+var TAB = [
+  [0,   780, 99, 72, "m1_01"],
+  [99,  780, 99, 72, "m2_01"],
+  [198, 780, 99, 72, "m3_01"],
+  [297, 780, 96, 72, "m4_01"]
+];
+
+var PAGES = {
+  /* ============ M1 认知入门 ============ */
+  m1_01: { img: "img/m1_01.png", spots: [
+    [16,148,361,192,"m1_02"],           // 主Banner·两分钟看懂汉剧
+    [16,348,90,80,"m1_02"],             // 快捷入口·汉剧来路
+    [106,348,90,80,"m1_03"],            // 快捷入口·西皮二黄
+    [197,348,90,80,"m1_04"],            // 快捷入口·生旦净丑
+    [287,348,90,80,"m1_05"],            // 快捷入口·名角名段
+    [16,456,361,132,"m1_02"],           // 内容卡·汉剧的来路
+    [16,604,361,132,"m1_04"]            // 内容卡·行当扮相
+  ], tab: true },
+
+  m1_02: { img: "img/m1_02.png", spots: [
+    [14,40,50,36,"back"],               // 返回
+    [16,646,361,104,"m1_03"]            // 一句话记住 → 唱腔与行当
+  ], tab: true },
+
+  m1_03: { img: "img/m1_03.png", spots: [
+    [14,40,50,36,"back"],
+    [16,152,361,92,"m2_02"],            // 西皮卡 → 剧目试听
+    [16,256,361,92,"m2_02"],            // 二黄卡 → 剧目试听
+    [16,420,172,116,"m1_04"],           // 生卡 → 行当详情
+    [205,420,172,116,"m1_04"],          // 旦卡
+    [16,548,172,116,"m1_04"],           // 净卡
+    [205,548,172,116,"m1_04"]           // 丑卡
+  ], tab: true },
+
+  m1_04: { img: "img/m1_04.png", spots: [
+    [14,40,50,36,"back"],
+    [16,568,361,96,"m1_06"],            // 代表人物 → 名角详情
+    [16,710,361,32,"m2_05"],            // 唱段·金殿 → 唱段列表
+    [16,748,361,32,"m2_03"]             // 唱段·装疯 → 唱词沉浸
+  ] },
+
+  m1_05: { img: "img/m1_05.png", spots: [
+    [14,40,50,36,"back"],
+    [16,132,361,92,"m1_06"],            // 陈伯华
+    [16,232,361,92,"m1_06"],            // 吴天保
+    [16,332,361,92,"m1_06"],            // 李春森
+    [16,478,361,50,"m2_02"],            // 名段速听·金殿
+    [16,534,361,50,"m2_02"],            // 名段速听·装疯
+    [16,590,361,50,"m2_02"],            // 名段速听·打花鼓
+    [16,660,361,84,"m2_05"]             // 入门推荐
+  ], tab: true },
+
+  m1_06: { img: "img/m1_06.png", spots: [
+    [14,40,50,36,"back"],
+    [16,470,111,140,"m2_02"],           // 宇宙锋
+    [138,470,111,140,"m2_02"],          // 二度梅
+    [260,470,111,140,"m2_02"],          // 贵妃醉酒
+    [16,656,361,42,"m2_02"],            // 名段试听·金殿
+    [16,704,361,42,"m2_02"]             // 名段试听·装疯
+  ] },
+
+  /* ============ M2 剧目试听 ============ */
+  m2_01: { img: "img/m2_01.png", spots: [
+    [16,92,361,42,"m5_01"],             // 搜索框 → 搜索筛选
+    [330,40,60,36,"m5_01"],             // 导航栏搜索图标
+    [16,198,361,88,"m2_02"],            // 宇宙锋
+    [16,298,361,88,"m2_02"],            // 二度梅
+    [16,398,361,88,"m2_02"],            // 柜中缘
+    [16,498,361,88,"m2_02"],            // 打花鼓
+    [16,598,361,88,"m2_02"]             // 贵妃醉酒
+  ], tab: true },
+
+  m2_02: { img: "img/m2_02.png", spots: [
+    [14,40,50,36,"back"],
+    [297,290,64,28,"m2_03"],            // 试听按钮 → 唱词沉浸
+    [168,508,56,56,"m2_03"],            // 播放大按钮
+    [16,408,361,34,"m2_05"],            // 播放器标题 → 唱段列表
+    [0,790,393,62,"m2_03"]              // 底部迷你播放条
+  ] },
+
+  m2_03: { img: "img/m2_03.png", spots: [
+    [14,40,50,36,"back"]                // 返回
+  ] },
+
+  m2_04: { img: "img/m2_04.png", spots: [
+    [14,40,50,36,"back"],
+    [16,92,361,132,"m2_02"],            // 剧目头图
+    [16,418,172,84,"m1_04"],            // 角色卡·赵艳容
+    [205,418,172,84,"m1_04"],           // 角色卡·赵高
+    [16,510,172,84,"m1_04"],            // 角色卡·哑奴
+    [205,510,172,84,"m1_04"],           // 角色卡·秦二世
+    [16,618,361,92,"m2_05"]             // 一句话看点 → 唱段列表
+  ] },
+
+  m2_05: { img: "img/m2_05.png", spots: [
+    [14,40,50,36,"back"],
+    [16,92,361,84,"m2_02"],             // 剧目信息卡
+    [16,222,361,96,"m2_03"],            // 唱段01·金殿 → 唱词沉浸
+    [16,330,361,96,"m2_03"],            // 唱段02·装疯
+    [16,438,361,96,"m2_03"],            // 唱段03·修本
+    [16,706,111,32,"m2_02"],            // 同剧推荐·二度梅
+    [138,706,111,32,"m2_02"],           // 同剧推荐·柜中缘
+    [260,706,111,32,"m2_02"]            // 同剧推荐·贵妃醉酒
+  ] },
+
+  /* ============ M3 观演衔接 ============ */
+  m3_01: { img: "img/m3_01.png", spots: [
+    [16,418,361,84,"m3_03"],            // 宇宙锋·全本 → 选座购票
+    [16,514,361,84,"m3_03"],            // 二度梅
+    [16,610,361,84,"m3_03"],            // 柜中缘
+    [0,722,393,28,"m3_02"]              // 查看更多 → 剧场导航
+  ], tab: true },
+
+  m3_02: { img: "img/m3_02.png", spots: [
+    [16,90,36,36,"back"],               // 返回控件
+    [214,646,147,46,"m3_03"]            // 购票按钮 → 选座购票
+  ], tab: true },
+
+  m3_03: { img: "img/m3_03.png", spots: [
+    [14,40,50,36,"back"],
+    [226,788,151,44,"m3_04"]            // 确认选座 → 订单支付
+  ] },
+
+  m3_04: { img: "img/m3_04.png", spots: [
+    [14,40,50,36,"back"],
+    [226,788,151,44,"m4_03"]            // 立即支付 → 我的票券
+  ] },
+
+  /* ============ M4 个人中心 ============ */
+  m4_01: { img: "img/m4_01.png", spots: [
+    [120,86,152,90,"m5_03"],            // 头像·未登录 → 登录授权
+    [46,220,100,52,"m4_02"],            // 收藏列
+    [146,220,100,52,"m4_04"],           // 观看列
+    [246,220,100,52,"m4_03"],           // 票券列
+    [16,318,361,56,"m4_02"],            // 功能行·我的收藏
+    [16,374,361,56,"m4_04"],            // 功能行·观看记录
+    [16,430,361,56,"m4_03"],            // 功能行·我的票券
+    [16,486,361,56,"m3_01"],            // 功能行·演出提醒 → 日历
+    [16,542,361,56,"m5_02"],            // 功能行·浏览偏好 → 设置
+    [16,614,361,56,"m5_02"],            // 帮助与反馈 → 设置
+    [340,36,50,40,"m5_02"]              // 齿轮 → 设置
+  ], tab: true },
+
+  m4_02: { img: "img/m4_02.png", spots: [
+    [14,40,50,36,"back"],
+    [16,148,172,192,"m2_02"],           // 收藏卡·宇宙锋
+    [205,148,172,192,"m2_02"],          // 二度梅
+    [16,352,172,192,"m2_02"],           // 柜中缘
+    [205,352,172,192,"m2_02"],          // 打花鼓
+    [16,556,172,192,"m2_02"],           // 贵妃醉酒
+    [205,556,172,192,"m2_05"]           // 经典唱段合集 → 唱段列表
+  ], tab: true },
+
+  m4_03: { img: "img/m4_03.png", spots: [
+    [14,40,50,36,"back"]
+  ] },
+
+  m4_04: { img: "img/m4_04.png", spots: [
+    [14,40,50,36,"back"],
+    [16,130,361,64,"m2_03"],            // 今天·金殿 → 唱词沉浸
+    [16,202,361,64,"m2_02"],            // 今天·装疯
+    [16,274,361,64,"m2_02"],            // 今天·二度梅
+    [16,358,361,64,"m2_02"],            // 昨天·贵妃醉酒
+    [16,430,361,64,"m2_02"],            // 昨天·打花鼓
+    [16,514,361,64,"m2_02"],            // 本周·柜中缘
+    [16,586,361,64,"m2_02"]             // 本周·西皮唱腔试听
+  ] },
+
+  /* ============ M5 辅助功能 ============ */
+  m5_01: { img: "img/m5_01.png", spots: [
+    [14,96,44,40,"back"],
+    [16,184,112,34,"m2_02"],            // 热门·宇宙锋
+    [16,664,361,88,"m2_02"],            // 结果预览卡
+    [16,786,361,44,"m2_01"]             // 查看结果 → 剧目列表
+  ] },
+
+  m5_02: { img: "img/m5_02.png", spots: [
+    [14,40,50,36,"back"]
+  ], tab: true },
+
+  m5_03: { img: "img/m5_03.png", spots: [
+    [36,410,321,44,"m4_01"],            // 微信一键登录 → 个人中心
+    [36,468,321,44,"m4_01"],            // 手机号登录 → 个人中心
+    [0,606,393,40,"m1_01"]              // 游客模式 → 首页
+  ] }
+};
+
+/* ---------- 渲染 ---------- */
+var screen = document.getElementById("screen");
+
+function render(id) {
+  var pg = PAGES[id]; if (!pg) return;
+  screen.innerHTML = "";
+  var img = document.createElement("img");
+  img.src = pg.img; img.className = "fadein"; img.alt = "";
+  screen.appendChild(img);
+  var spots = pg.spots.slice();
+  if (pg.tab) spots = spots.concat(TAB);
+  spots.forEach(function (s) {
+    var d = document.createElement("div");
+    d.className = "spot";
+    d.style.left = s[0] + "px"; d.style.top = s[1] + "px";
+    d.style.width = s[2] + "px"; d.style.height = s[3] + "px";
+    d.addEventListener("click", function (e) { e.stopPropagation(); go(s[4]); });
+    screen.appendChild(d);
+  });
+}
+
+function go(target) {
+  if (target === "back") { history.back(); return; }
+  if ("#" + target !== location.hash) location.hash = target;
+}
+
+window.addEventListener("hashchange", function () {
+  render(location.hash.slice(1) || "m5_03");
+});
+
+/* 初始：打开即登录页 */
+if (!location.hash) history.replaceState(null, "", "#m5_03");
+render(location.hash.slice(1) || "m5_03");
+
+/* 预加载全部页面 */
+Object.keys(PAGES).forEach(function (k) {
+  var i = new Image(); i.src = PAGES[k].img;
+});
+
+/* 等比缩放铺满视口（留 12px 呼吸位） */
+function fit() {
+  var s = Math.min((window.innerWidth - 24) / W, (window.innerHeight - 24) / H);
+  document.querySelector(".frame").style.transform = "scale(" + s + ")";
+}
+window.addEventListener("resize", fit);
+fit();
+</script>
+</body>
+</html>
